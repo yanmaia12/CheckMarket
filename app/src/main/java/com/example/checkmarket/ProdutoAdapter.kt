@@ -12,7 +12,8 @@ import androidx.recyclerview.widget.RecyclerView
 class ProdutoAdapter(
     private val listaProdutos: MutableList<Produto>,
     private val onProdutoCheck: (Produto) -> Unit,
-    private val onDeletarClick: (Produto) -> Unit
+    private val onDeletarClick: (Produto) -> Unit,
+    private val onEditarClick: (Produto) -> Unit
 ) : RecyclerView.Adapter<ProdutoAdapter.ProdutoViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProdutoViewHolder {
@@ -46,6 +47,10 @@ class ProdutoAdapter(
 
         holder.btnDeletar.setOnClickListener {
             onDeletarClick(produto)
+        }
+
+        holder.itemView.setOnClickListener {
+            onEditarClick(produto)
         }
     }
 

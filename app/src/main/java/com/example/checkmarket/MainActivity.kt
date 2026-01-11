@@ -29,7 +29,12 @@ class MainActivity : AppCompatActivity() {
 
         adapter = ProdutoAdapter(listaProdutos,
             onProdutoCheck = { produto -> atualizarProduto(produto) },
-            onDeletarClick = { produto -> deletarProduto(produto) }
+            onDeletarClick = { produto -> deletarProduto(produto) },
+            onEditarClick = { produto ->
+                val intent = Intent(this, FormularioActivity::class.java)
+                intent.putExtra("produto", produto)
+                startActivity(intent)
+            }
         )
         recyclerView.adapter = adapter
 

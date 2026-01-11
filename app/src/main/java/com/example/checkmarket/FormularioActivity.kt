@@ -11,6 +11,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 class FormularioActivity : AppCompatActivity() {
 
+    private var produtoEditar: Produto? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_formulario)
@@ -20,46 +22,58 @@ class FormularioActivity : AppCompatActivity() {
         val spinnerCategoria = findViewById<Spinner>(R.id.spinnerCategoria)
         val btnSalvar = findViewById<Button>(R.id.btnSalvar)
 
-        val categorias = listOf("Mercado", "Frutas e Legumes", "Talho", "Padaria", "Limpeza", "Outros")
+        val categorias = listOf("Mercado", "Hortifruti", "Açougue", "Padaria", "Limpeza", "Outros")
         val adapterSpinner = ArrayAdapter(this, android.R.layout.simple_spinner_item, categorias)
         adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerCategoria.adapter = adapterSpinner
 
+        produtoEditar = intent.getSerializableExtra("produto") as? Produto
+
+        if (produtoEditar != null) {
+            editNome.setText(produtoEditar?.nome)
+            editQuantidade.setText(produtoEditar?.quantidade.toString())
+
+            val posicaoCategoria = categorias.indexOf(produtoEditar?.categoria)
+            spinnerCategoria.setSelection(posicaoCategoria)
+
+            btnSalvar.text = "Atualizar"
+        }
+
         btnSalvar.setOnClickListener {
             val nome = editNome.text.toString()
-            val quantidadeTexto = editQuantidade.text.toString()
-            val categoriaSelecionada = spinnerCategoria.selectedItem.toString()
+            val quantidade = editQuantidade.text.toString().toIntOrNull() ?: 0
+            val categoria = spinnerCategoria.selectedItem.toString()
 
             if (nome.isEmpty()) {
                 editNome.error = "Preencha o nome!"
                 return@setOnClickListener
             }
 
-            val quantidade = quantidadeTexto.toIntOrNull() ?: 0
+            val db = FirebaseFirestore.getInstance()
 
-            val novoProduto = Produto(
-                id = "",
-                nome = nome,
-                quantidade = quantidade,
-                categoria = categoriaSelecionada,
-                comprado = false
-            )
+            if (produtoEditar != null) {
+                val dadosAtualizados = mapOf(
+                    "nome" to nome,
+                    "quantidade" to quantidade,
+                    "categoria" to categoria
+                )
 
-            salvarNoFirebase(novoProduto)
+                db.collection("produtos").document(produtoEditar!!.id)
+                    .update(dadosAtualizados)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Produto atualizado!", Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+
+            } else {
+                val novo = Produto("", nome, quantidade, categoria, false)
+
+                db.collection("produtos").add(novo)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Criado com sucesso!", Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+            }
         }
-    }
-
-    private fun salvarNoFirebase(produto: Produto) {
-        val db = FirebaseFirestore.getInstance()
-
-        db.collection("produtos")
-            .add(produto)
-            .addOnSuccessListener {
-                Toast.makeText(this, "Produto salvo!", Toast.LENGTH_SHORT).show()
-                finish()
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Erro ao salvar: ${e.message}", Toast.LENGTH_LONG).show()
-            }
     }
 }
